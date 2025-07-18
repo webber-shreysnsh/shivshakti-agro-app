@@ -1,0 +1,87 @@
+// Shivshakti Agro Industries - Mobile App for Purchase, Sales, Stock, and Rice Milling import React, { useState } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Table } from "@/components/ui/table";
+
+const initialStock = { paddy: 0, wheat: 0, rice: 0, bran: 0, brokenRice: 0, };
+
+export default function ShivshaktiAgroApp() { const [purchases, setPurchases] = useState([]); const [sales, setSales] = useState([]); const [stock, setStock] = useState(initialStock); const [product, setProduct] = useState("paddy"); const [quantity, setQuantity] = useState(0); const [rate, setRate] = useState(0); const [type, setType] = useState("purchase"); const [millInput, setMillInput] = useState(0); const [party, setParty] = useState("");
+
+const handleTransaction = () => { const total = quantity * rate; const entry = { product, quantity, rate, total, party }; if (type === "purchase") { setPurchases([...purchases, entry]); setStock((prev) => ({ ...prev, [product]: prev[product] + quantity })); } else { setSales([...sales, entry]); setStock((prev) => ({ ...prev, [product]: prev[product] - quantity })); } setQuantity(0); setRate(0); setParty(""); };
+
+const handleMillProcessing = () => { if (stock.paddy >= millInput) { setStock((prev) => ({ ...prev, paddy: prev.paddy - millInput, rice: prev.rice + millInput * 0.65, bran: prev.bran + millInput * 0.10, brokenRice: prev.brokenRice + millInput * 0.25, })); } };
+
+const totalPurchaseCost = purchases.reduce((sum, p) => sum + p.total, 0); const totalSalesAmount = sales.reduce((sum, s) => sum + s.total, 0); const stockValue = Object.keys(stock).reduce((sum, key) => { const avgRate = purchases .filter((p) => p.product === key) .reduce((acc, curr) => acc + curr.rate, 0) / (purchases.filter((p) => p.product === key).length || 1); return sum + stock[key] * avgRate; }, 0);
+
+return ( <div className="p-4 grid gap-6"> <h1 className="text-2xl font-bold text-center">🌾 Shivshakti Agro Industries</h1>
+
+<Card>
+    <CardContent className="grid grid-cols-1 gap-4 p-4">
+      <select value={type} onChange={(e) => setType(e.target.value)}>
+        <option value="purchase">Purchase</option>
+        <option value="sale">Sale</option>
+      </select>
+      <select value={product} onChange={(e) => setProduct(e.target.value)}>
+        <option value="paddy">Paddy</option>
+        <option value="wheat">Wheat</option>
+        <option value="rice">Rice</option>
+        <option value="bran">Bran</option>
+        <option value="brokenRice">Broken Rice</option>
+      </select>
+      <Input
+        type="text"
+        placeholder="Party Name"
+        value={party}
+        onChange={(e) => setParty(e.target.value)}
+      />
+      <Input
+        type="number"
+        placeholder="Quantity (kg)"
+        value={quantity}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+      />
+      <Input
+        type="number"
+        placeholder="Rate per kg"
+        value={rate}
+        onChange={(e) => setRate(Number(e.target.value))}
+      />
+      <Button onClick={handleTransaction}>Add {type}</Button>
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardContent className="grid grid-cols-1 gap-4 p-4">
+      <Input
+        type="number"
+        placeholder="Paddy Input for Milling (kg)"
+        value={millInput}
+        onChange={(e) => setMillInput(Number(e.target.value))}
+      />
+      <Button onClick={handleMillProcessing}>Process in Rice Mill</Button>
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardContent className="p-4">
+      <h2 className="text-xl font-semibold mb-2">📦 Current Stock</h2>
+      <ul>
+        {Object.entries(stock).map(([key, val]) => (
+          <li key={key}>
+            {key.charAt(0).toUpperCase() + key.slice(1)}: {val.toFixed(2)} kg
+          </li>
+        ))}
+      </ul>
+    </CardContent>
+  </Card>
+
+  <Card>
+    <CardContent className="p-4">
+      <h2 className="text-xl font-semibold">📊 Summary</h2>
+      <p>Total Purchase Cost: ₹{totalPurchaseCost.toFixed(2)}</p>
+      <p>Total Sales Amount: ₹{totalSalesAmount.toFixed(2)}</p>
+      <p>Estimated Stock Value: ₹{stockValue.toFixed(2)}</p>
+      <p>Profit/Loss: ₹{(totalSalesAmount - totalPurchaseCost).toFixed(2)}</p>
+    </CardContent>
+  </Card>
+</div>
+
+); }
+
